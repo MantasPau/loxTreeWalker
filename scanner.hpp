@@ -11,7 +11,7 @@ public:
     Scanner(const std::string& _source) : source(_source) {
         FillKeywordsMap();
     }
-    std::list<Token>& ScanTokens();
+    std::list<std::pair<void*, const std::type_info&> > * ScanTokens();
 
 private:
     bool IsAtEnd() {
@@ -51,21 +51,18 @@ private:
         return source.at(current + 1);
     }
     void AddToken(TokenType type) {
-        AddToken(type, "NULL");
+        AddToken<std::string>(type, "NULL");
     }
-    void AddToken(TokenType type, std::string literal) {
+    template <typename T>
+    void AddToken(TokenType type, T literal) {
         std::string text = source.substr(start, current - start);
-        Token t(type, text, literal, line);
-        tokens.push_back(t);
-    }
-    void AddToken(TokenType type, double literal) {
-        std::string text = source.substr(start, current - start);
-        Token t(type, text, literal, line);
-        tokens.push_back(t);
+        //Token<T> t(type, text, literal, line);
+        tokens.push_back(std::pair<void*, const std::type_info&> 
+                        ((void*)(new Token<T>(type, text, literal, line)), typeid(T)));
     }
     void FillKeywordsMap();
 
-    std::list<Token> tokens;
+    std::list<std::pair<void*, const std::type_info&> > tokens;
     int start = 0;
     int current = 0;
     int line = 0;
@@ -79,7 +76,7 @@ void Scanner::FillKeywordsMap()
     keywords["and"] = AND;
     keywords["class"] = CLASS;
     keywords["else"] = ELSE;
-    keywords["FALSE"] = FALSE;
+    keywords["false"] = FALSE;
     keywords["for"] = FOR;
     keywords["fun"] = FUN;
     keywords["if"] = IF;
@@ -106,16 +103,17 @@ void Scanner::Identifier()
     AddToken(type);
 }
 
-std::list<Token>& Scanner::ScanTokens()
+std::list<std::pair<void*, const std::type_info&> > * Scanner::ScanTokens()
 {
     while (!IsAtEnd()) {
         start = current;
         ScanToken();
     }
     
-    Token t(EOFT, "", "NULL", line);
-    tokens.push_back(t);
-    return tokens;
+    //Token<std::string> t(EOFT, "", "NULL", line);
+    tokens.push_back(std::pair<void*, const std::type_info&> 
+                    ((void*)(new Token<std::string>(EOFT, "", "NULL", line)), typeid(std::string)));
+    return &tokens;
 }
 
 void Scanner::ScanToken()
@@ -180,7 +178,7 @@ void Scanner::String()
 
     Advance();
     std::string value = source.substr(start + 1, current - start - 2);
-    AddToken(STRING, value);
+    AddToken<std::string>(STRING, value);
 }
 
 void Scanner::Number()
@@ -193,5 +191,5 @@ void Scanner::Number()
         Advance();
         while (IsDigit(Peek())) Advance();
     }
-    AddToken(NUMBER, atof(source.substr(start, current - start).c_str()));
+    AddToken<double>(NUMBER, atof(source.substr(start, current - start).c_str()));
 }

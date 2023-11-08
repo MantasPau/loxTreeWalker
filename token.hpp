@@ -28,46 +28,36 @@ enum LiteralType
     LT_STRING, LT_DOUBLE
 };
 
+template <typename T>
 class Token
 {
 public:
-    Token();
-    Token(const TokenType _type, const std::string _lexeme, const std::string _literal, const int line) : type(_type), lexeme(_lexeme), literalS(_literal), literalD(0), line(line) {literalType = LT_STRING;}
-    Token(const TokenType _type, const std::string _lexeme, const double _literal, const int line) : type(_type), lexeme(_lexeme), literalS(""), literalD(_literal), line(line) {literalType = LT_DOUBLE;}
+//  Token();
+    Token(const TokenType _type, const std::string _lexeme, const T _literal, const int line) : type(_type), lexeme(_lexeme), literal(_literal), line(line) {}
     std::string toString();
-    friend std::ostream& operator<<(std::ostream& os, const Token& t);
-
+    template<typename U>
+    friend std::ostream& operator<<(std::ostream& os, const Token<U>& t);
+    
 private:
     TokenType type;
     std::string lexeme;
-    std::string literalS;
-    double literalD;
-    LiteralType literalType;
+    T literal;
     int line;
 };
 
-Token::Token()
-{
-
-}
-
-std::ostream& operator<<(std::ostream& os, const Token& t)
+template <typename U>
+std::ostream& operator<<(std::ostream& os, const Token<U>& t)
 {
     os << t.lexeme;
     return os;
 }
 
-std::string Token::toString()
+template <typename T>
+std::string Token<T>::toString()
 {
     std::string str;
-    switch (literalType)
-    {
-        case LT_STRING:
-            str = literalS;
-            break;
-        case LT_DOUBLE:
-            str = std::to_string(literalD);
-            break;
-    }
+    if (typeid(literal) == typeid(std::string))
+        str = literal;
+    else str = std::to_string(literal);
     return type + " " + lexeme + " " + str;
 }

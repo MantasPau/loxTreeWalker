@@ -57,12 +57,15 @@ void Lox::RunPrompt()
 void Lox::Run(const std::string& script)
 {
     Scanner scanner(script);
-    std::list<Token> tokens;
+    std::list<std::pair<void*, const std::type_info&> > * tokens;
     tokens = scanner.ScanTokens();
 
-    std::list<Token>::iterator tIt;
-    for (tIt = tokens.begin(); tIt != tokens.end(); tIt++)
+    std::list<std::pair<void*, const std::type_info&> >::iterator tIt;
+    for (tIt = tokens->begin(); tIt != tokens->end(); tIt++)
     {
-        std::cout << *tIt << std::endl;
+        if (typeid(std::string) == tIt->second)
+            std::cout << *((Token<std::string> *)(tIt->first)) << std::endl;
+        if (typeid(double) == tIt->second)
+            std::cout << *((Token<double> *)(tIt->first)) << std::endl;
     }
 }
